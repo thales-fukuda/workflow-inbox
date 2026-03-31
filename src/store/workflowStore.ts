@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { WorkflowInstance, Task, Event, InvoiceData } from '../types';
+import type { WorkflowInstance, Task, Event, InvoiceData, LineItem } from '../types';
 import { getRandomMockInvoice } from '../data/mockInvoices';
 import { skills } from '../data/skills';
 
@@ -7,7 +7,6 @@ interface WorkflowStore {
   workflows: WorkflowInstance[];
   selectedWorkflowId: string | null;
 
-  // Actions
   selectWorkflow: (id: string | null) => void;
   simulateInvoiceEmail: () => void;
   createWorkflowFromInvoice: (data: InvoiceData, fileName: string) => void;
@@ -15,6 +14,11 @@ interface WorkflowStore {
   rejectWorkflow: (id: string) => void;
   retryWorkflow: (id: string) => void;
   dismissWorkflow: (id: string) => void;
+
+  // Editing
+  updateExtractedData: (workflowId: string, data: Partial<InvoiceData>) => void;
+  updateLineItem: (workflowId: string, itemId: string, updates: Partial<LineItem>) => void;
+  resolveEan: (workflowId: string, itemId: string, ean: string, productName?: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -22,28 +26,38 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 const createTasksForInvoice = (data: InvoiceData): Task[] => {
   const tasks: Task[] = [];
 
-  // Task 1: Parse invoice (already done in simulation, but we show it)
   tasks.push({
     id: generateId(),
     skillId: 'parse_invoice',
     name: 'Parse Invoice',
     description: `Extract data from ${data.invoiceNumber}`,
-    status: 'completed', // Pre-completed since we show extracted data
+    status: 'completed',
   });
 
-  // Task 2: Create SKUs for new items
-  const newSkuItems = data.lineItems.filter(item => item.isNewSku);
-  newSkuItems.forEach(item => {
+  // EAN resolution task if there are unresolved EANs
+  const unresolvedItems = data.lineItems.filter(item => item.eanStatus === 'unknown');
+  if (unresolvedItems.length > 0) {
+    tasks.push({
+      id: generateId(),
+      skillId: 'resolve_ean',
+      name: 'Resolve EANs',
+      description: `Resolve ${unresolvedItems.length} unresolved EAN codes`,
+      status: 'pending',
+    });
+  }
+
+  // Create SKU tasks for new products
+  const newProducts = data.lineItems.filter(item => item.isNewProduct);
+  newProducts.forEach(item => {
     tasks.push({
       id: generateId(),
       skillId: 'create_sku',
       name: `Create SKU: ${item.name}`,
-      description: `Register new product in catalog, pricing, and marketplace`,
+      description: `Register new product in catalog`,
       status: 'pending',
     });
   });
 
-  // Task 3: Register invoice
   tasks.push({
     id: generateId(),
     skillId: 'register_invoice',
@@ -52,7 +66,6 @@ const createTasksForInvoice = (data: InvoiceData): Task[] => {
     status: 'pending',
   });
 
-  // Task 4: Update inventory
   tasks.push({
     id: generateId(),
     skillId: 'update_inventory',
@@ -86,7 +99,6 @@ const executeWorkflow = async (
     const task = pendingTasks[i];
     const skill = skills[task.skillId];
 
-    // Update task to running
     updateWorkflow(wf => ({
       ...wf,
       currentTaskIndex: wf.tasks.findIndex(t => t.id === task.id),
@@ -95,10 +107,8 @@ const executeWorkflow = async (
       ),
     }));
 
-    // Simulate execution
     await new Promise(resolve => setTimeout(resolve, skill?.estimatedDuration || 1000));
 
-    // Random failure for demo (10% chance, but not on first workflow)
     const shouldFail = Math.random() < 0.1 && get().workflows.filter(w => w.status === 'completed').length > 0;
 
     if (shouldFail) {
@@ -114,7 +124,6 @@ const executeWorkflow = async (
       return;
     }
 
-    // Mark task as completed
     updateWorkflow(wf => ({
       ...wf,
       tasks: wf.tasks.map(t =>
@@ -123,7 +132,6 @@ const executeWorkflow = async (
     }));
   }
 
-  // All tasks completed
   updateWorkflow(wf => ({
     ...wf,
     status: 'completed',
@@ -199,8 +207,6 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
           : wf
       ),
     }));
-
-    // Start execution
     executeWorkflow(id, get, set);
   },
 
@@ -225,7 +231,6 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         };
       }),
     }));
-
     executeWorkflow(id, get, set);
   },
 
@@ -233,6 +238,61 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     set(state => ({
       workflows: state.workflows.filter(wf => wf.id !== id),
       selectedWorkflowId: state.selectedWorkflowId === id ? null : state.selectedWorkflowId,
+    }));
+  },
+
+  updateExtractedData: (workflowId, data) => {
+    set(state => ({
+      workflows: state.workflows.map(wf => {
+        if (wf.id !== workflowId || !wf.extractedData) return wf;
+        return {
+          ...wf,
+          extractedData: { ...wf.extractedData, ...data, isEdited: true },
+        };
+      }),
+    }));
+  },
+
+  updateLineItem: (workflowId, itemId, updates) => {
+    set(state => ({
+      workflows: state.workflows.map(wf => {
+        if (wf.id !== workflowId || !wf.extractedData) return wf;
+        const lineItems = wf.extractedData.lineItems.map(item =>
+          item.id === itemId ? { ...item, ...updates, isEdited: true } : item
+        );
+        const total = lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+        const hasUnresolvedEans = lineItems.some(item => item.eanStatus === 'unknown');
+        return {
+          ...wf,
+          extractedData: { ...wf.extractedData, lineItems, total, hasUnresolvedEans, isEdited: true },
+        };
+      }),
+    }));
+  },
+
+  resolveEan: (workflowId, itemId, ean, productName) => {
+    set(state => ({
+      workflows: state.workflows.map(wf => {
+        if (wf.id !== workflowId || !wf.extractedData) return wf;
+        const lineItems = wf.extractedData.lineItems.map(item =>
+          item.id === itemId
+            ? {
+                ...item,
+                ean,
+                eanStatus: 'manual' as const,
+                eanSource: 'user' as const,
+                name: productName || item.name,
+                isNewProduct: false,
+                isEdited: true,
+              }
+            : item
+        );
+        const hasUnresolvedEans = lineItems.some(item => item.eanStatus === 'unknown');
+        return {
+          ...wf,
+          extractedData: { ...wf.extractedData, lineItems, hasUnresolvedEans, isEdited: true },
+        };
+      }),
     }));
   },
 }));

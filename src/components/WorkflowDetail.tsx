@@ -1,7 +1,10 @@
-import type { WorkflowInstance, Task } from '../types';
+import { useState } from 'react';
+import type { WorkflowInstance, Task, LineItem } from '../types';
 import type { TranslationKey } from '../i18n/translations';
 import { formatCurrency } from '../utils/formatTime';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useWorkflowStore } from '../store/workflowStore';
+import { EanSearchModal } from './EanSearchModal';
 
 interface WorkflowDetailProps {
   workflow: WorkflowInstance;
@@ -27,6 +30,35 @@ const TaskStatusIcon = ({ status }: { status: Task['status'] }) => {
   }
 };
 
+const EanStatusBadge = ({ status, ean }: { status: LineItem['eanStatus']; ean: string | null }) => {
+  if (status === 'resolved' && ean) {
+    return (
+      <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded font-mono">
+        {ean}
+      </span>
+    );
+  }
+  if (status === 'manual' && ean) {
+    return (
+      <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded font-mono">
+        {ean}
+      </span>
+    );
+  }
+  if (status === 'suggested') {
+    return (
+      <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs rounded animate-pulse-subtle">
+        SUGGESTED
+      </span>
+    );
+  }
+  return (
+    <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded">
+      NO EAN
+    </span>
+  );
+};
+
 export const WorkflowDetail = ({
   workflow,
   onBack,
@@ -37,6 +69,13 @@ export const WorkflowDetail = ({
 }: WorkflowDetailProps) => {
   const { t } = useLanguage();
   const { extractedData, event, status, tasks } = workflow;
+  const { updateExtractedData, updateLineItem, resolveEan } = useWorkflowStore();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedSupplier, setEditedSupplier] = useState(extractedData?.supplier || '');
+  const [editedInvoiceNumber, setEditedInvoiceNumber] = useState(extractedData?.invoiceNumber || '');
+  const [editedDate, setEditedDate] = useState(extractedData?.date || '');
+  const [eanModalItem, setEanModalItem] = useState<LineItem | null>(null);
 
   const formatTime = (date: Date): string => {
     const now = new Date();
@@ -51,6 +90,34 @@ export const WorkflowDetail = ({
     if (diffHour < 24) return `${diffHour}${t('hoursAgo')}`;
     return `${diffDay}${t('daysAgo')}`;
   };
+
+  const handleSaveEdits = () => {
+    updateExtractedData(workflow.id, {
+      supplier: editedSupplier,
+      invoiceNumber: editedInvoiceNumber,
+      date: editedDate,
+    });
+    setIsEditing(false);
+  };
+
+  const handleQuantityChange = (itemId: string, quantity: number) => {
+    updateLineItem(workflow.id, itemId, { quantity: Math.max(1, quantity) });
+  };
+
+  const handlePriceChange = (itemId: string, unitPrice: number) => {
+    updateLineItem(workflow.id, itemId, { unitPrice: Math.max(0, unitPrice) });
+  };
+
+  const handleEanSelect = (ean: string, productName?: string, _saveMapping?: boolean) => {
+    if (eanModalItem) {
+      resolveEan(workflow.id, eanModalItem.id, ean, productName);
+      // TODO: Save mapping to productStore if _saveMapping is true
+    }
+    setEanModalItem(null);
+  };
+
+  const hasUnresolvedEans = extractedData?.lineItems.some(item => item.eanStatus === 'unknown');
+  const canApprove = status === 'pending_approval' && !hasUnresolvedEans;
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden animate-slide-in-right">
@@ -83,7 +150,12 @@ export const WorkflowDetail = ({
             <>
               <button
                 onClick={onApprove}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-all duration-200 btn-press hover:shadow-lg hover:shadow-indigo-500/25"
+                disabled={!canApprove}
+                className={`px-4 py-2 font-medium rounded-lg transition-all duration-200 btn-press ${
+                  canApprove
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-lg hover:shadow-indigo-500/25'
+                    : 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                }`}
               >
                 {t('approve')}
               </button>
@@ -93,6 +165,11 @@ export const WorkflowDetail = ({
               >
                 {t('reject')}
               </button>
+              {hasUnresolvedEans && (
+                <span className="text-sm text-amber-600 dark:text-amber-400 ml-2">
+                  {t('resolveEansFirst')}
+                </span>
+              )}
             </>
           )}
           {status === 'failed' && (
@@ -142,53 +219,136 @@ export const WorkflowDetail = ({
         {/* Extracted Data */}
         {extractedData && (
           <section className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              {t('extractedData')}
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('extractedData')}
+              </h3>
+              {status === 'pending_approval' && (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  {isEditing ? t('cancel') : t('edit')}
+                </button>
+              )}
+            </div>
             <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-3 transition-colors duration-200">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">{t('supplier')}</span>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.supplier}</p>
+              {isEditing ? (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <label className="text-slate-500 dark:text-slate-400 block mb-1">{t('supplier')}</label>
+                    <input
+                      type="text"
+                      value={editedSupplier}
+                      onChange={(e) => setEditedSupplier(e.target.value)}
+                      className="w-full px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 dark:text-slate-400 block mb-1">{t('invoiceNumber')}</label>
+                    <input
+                      type="text"
+                      value={editedInvoiceNumber}
+                      onChange={(e) => setEditedInvoiceNumber(e.target.value)}
+                      className="w-full px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 dark:text-slate-400 block mb-1">{t('date')}</label>
+                    <input
+                      type="date"
+                      value={editedDate}
+                      onChange={(e) => setEditedDate(e.target.value)}
+                      className="w-full px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={handleSaveEdits}
+                      className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      {t('save')}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">{t('invoiceNumber')}</span>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.invoiceNumber}</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">{t('supplier')}</span>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.supplier}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">{t('invoiceNumber')}</span>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.invoiceNumber}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">{t('date')}</span>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.date}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">{t('total')}</span>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                      {formatCurrency(extractedData.total, extractedData.currency)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">{t('date')}</span>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{extractedData.date}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">{t('total')}</span>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">
-                    {formatCurrency(extractedData.total, extractedData.currency)}
-                  </p>
-                </div>
-              </div>
+              )}
 
               <div className="border-t border-slate-200 dark:border-slate-600 pt-3">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('lineItems')}</p>
                 <div className="space-y-2">
-                  {extractedData.lineItems.map((item, index) => (
+                  {extractedData.lineItems.map((item) => (
                     <div
-                      key={index}
-                      className="flex items-center justify-between text-sm py-1 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-600/50 rounded px-2 -mx-2"
+                      key={item.id}
+                      className="flex items-center justify-between text-sm py-2 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-600/50 rounded px-2 -mx-2"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-900 dark:text-slate-100">{item.name}</span>
-                        {item.isNewSku ? (
-                          <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs rounded animate-pulse-subtle">
-                            NEW SKU
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
+                        <EanStatusBadge status={item.eanStatus} ean={item.ean} />
+                        {item.isNewProduct && (
+                          <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs rounded">
+                            NEW
                           </span>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-xs">
-                            {item.sku}
+                        )}
+                        {item.isEdited && (
+                          <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded">
+                            {t('edited')}
                           </span>
                         )}
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">
-                        {item.quantity} × {formatCurrency(item.unitPrice, extractedData.currency)}
+                      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                        {status === 'pending_approval' ? (
+                          <>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
+                              className="w-16 px-2 py-1 text-right border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                              min="1"
+                            />
+                            <span>×</span>
+                            <input
+                              type="number"
+                              value={item.unitPrice}
+                              onChange={(e) => handlePriceChange(item.id, parseFloat(e.target.value) || 0)}
+                              className="w-24 px-2 py-1 text-right border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                              min="0"
+                              step="0.01"
+                            />
+                            {item.eanStatus === 'unknown' && (
+                              <button
+                                onClick={() => setEanModalItem(item)}
+                                className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs rounded transition-colors"
+                              >
+                                {t('resolveEan')}
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <span>
+                            {item.quantity} × {formatCurrency(item.unitPrice, extractedData.currency)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -242,6 +402,17 @@ export const WorkflowDetail = ({
           </div>
         </section>
       </div>
+
+      {/* EAN Search Modal */}
+      {eanModalItem && (
+        <EanSearchModal
+          isOpen={true}
+          onClose={() => setEanModalItem(null)}
+          onSelect={handleEanSelect}
+          productName={eanModalItem.name}
+          supplierCode={eanModalItem.supplierCode}
+        />
+      )}
     </div>
   );
 };

@@ -12,6 +12,9 @@ export type TaskStatus =
   | 'failed'
   | 'skipped';
 
+export type EanStatus = 'resolved' | 'suggested' | 'manual' | 'unknown';
+export type EanSource = 'extracted' | 'mapping' | 'database' | 'user';
+
 export interface Skill {
   id: string;
   name: string;
@@ -31,21 +34,46 @@ export interface Task {
   completedAt?: Date;
 }
 
+export interface EanSuggestion {
+  ean: string;
+  productName: string;
+  brand?: string;
+  confidence: number;
+  source: string;
+  imageUrl?: string;
+}
+
 export interface LineItem {
+  id: string;
   name: string;
-  sku: string | null;
+  supplierCode: string | null;
   quantity: number;
   unitPrice: number;
-  isNewSku: boolean;
+
+  // EAN Resolution
+  ean: string | null;
+  eanStatus: EanStatus;
+  eanSource: EanSource | null;
+  eanConfidence?: number;
+  eanSuggestions?: EanSuggestion[];
+
+  // Tracking
+  isEdited: boolean;
+  isNewProduct: boolean;
 }
 
 export interface InvoiceData {
   supplier: string;
+  supplierCode?: string;
   invoiceNumber: string;
   date: string;
   total: number;
   currency: string;
   lineItems: LineItem[];
+
+  // Validation
+  hasUnresolvedEans: boolean;
+  isEdited: boolean;
 }
 
 export interface Event {
@@ -78,4 +106,30 @@ export interface WorkflowTemplate {
   description: string;
   icon: string;
   skillIds: string[];
+}
+
+// Product Catalog
+export interface Product {
+  id: string;
+  ean: string;
+  name: string;
+  brand?: string;
+  category?: string;
+  imageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  source: 'manual' | 'invoice' | 'api';
+}
+
+// Supplier Mapping
+export interface SupplierProductMapping {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  supplierProductCode: string;
+  supplierProductName: string;
+  ean: string;
+  confidence: 'manual' | 'confirmed' | 'suggested';
+  createdAt: Date;
+  lastSeenAt: Date;
 }

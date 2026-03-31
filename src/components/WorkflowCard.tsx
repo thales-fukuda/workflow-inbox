@@ -47,7 +47,7 @@ export const WorkflowCard = ({
   const { t } = useLanguage();
   const { extractedData, status, tasks, createdAt } = workflow;
 
-  const newSkuCount = extractedData?.lineItems.filter(i => i.isNewSku).length || 0;
+  const unresolvedEanCount = extractedData?.lineItems.filter(i => i.eanStatus === 'unknown').length || 0;
   const lineItemCount = extractedData?.lineItems.length || 0;
 
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
@@ -89,8 +89,8 @@ export const WorkflowCard = ({
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
               {extractedData?.supplier} • {lineItemCount} {t('items')}
-              {newSkuCount > 0 && (
-                <span className="text-amber-600 dark:text-amber-400"> • {newSkuCount} {newSkuCount > 1 ? t('newSkus') : t('newSku')}</span>
+              {unresolvedEanCount > 0 && (
+                <span className="text-amber-600 dark:text-amber-400"> • {unresolvedEanCount} {t('unresolvedEans')}</span>
               )}
             </p>
           </div>

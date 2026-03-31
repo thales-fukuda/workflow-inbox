@@ -270,7 +270,7 @@ export const UploadModal = ({ isOpen, onClose, onExtracted }: UploadModalProps) 
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
-                          {item.isNewSku && (
+                          {item.isNewProduct && (
                             <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs rounded flex-shrink-0">
                               NEW
                             </span>

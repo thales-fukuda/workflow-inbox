@@ -81,25 +81,37 @@ describe('Type definitions', () => {
   describe('LineItem', () => {
     it('should have required properties', () => {
       const item: LineItem = {
+        id: '1',
         name: 'Product',
-        sku: 'SKU-001',
+        supplierCode: 'SKU-001',
         quantity: 5,
         unitPrice: 10.5,
-        isNewSku: false,
+        ean: '7891234567890',
+        eanStatus: 'resolved',
+        eanSource: 'extracted',
+        isEdited: false,
+        isNewProduct: false,
       };
-      expect(item.isNewSku).toBe(false);
+      expect(item.isNewProduct).toBe(false);
+      expect(item.eanStatus).toBe('resolved');
     });
 
-    it('should allow null sku for new items', () => {
+    it('should allow null ean for unknown items', () => {
       const item: LineItem = {
+        id: '2',
         name: 'New Product',
-        sku: null,
+        supplierCode: null,
         quantity: 1,
         unitPrice: 100,
-        isNewSku: true,
+        ean: null,
+        eanStatus: 'unknown',
+        eanSource: null,
+        isEdited: false,
+        isNewProduct: true,
       };
-      expect(item.sku).toBeNull();
-      expect(item.isNewSku).toBe(true);
+      expect(item.ean).toBeNull();
+      expect(item.eanStatus).toBe('unknown');
+      expect(item.isNewProduct).toBe(true);
     });
   });
 
@@ -112,8 +124,11 @@ describe('Type definitions', () => {
         total: 1000,
         currency: 'BRL',
         lineItems: [],
+        hasUnresolvedEans: false,
+        isEdited: false,
       };
       expect(invoice.currency).toBe('BRL');
+      expect(invoice.hasUnresolvedEans).toBe(false);
     });
   });
 

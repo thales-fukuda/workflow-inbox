@@ -64,9 +64,11 @@ describe('workflowStore', () => {
       total: 1000,
       currency: 'BRL',
       lineItems: [
-        { name: 'Item 1', sku: 'SKU-001', quantity: 5, unitPrice: 100, isNewSku: false },
-        { name: 'Item 2', sku: null, quantity: 10, unitPrice: 50, isNewSku: true },
+        { id: '1', name: 'Item 1', supplierCode: 'SKU-001', quantity: 5, unitPrice: 100, ean: '7891234567890', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
+        { id: '2', name: 'Item 2', supplierCode: null, quantity: 10, unitPrice: 50, ean: null, eanStatus: 'unknown', eanSource: null, isEdited: false, isNewProduct: true },
       ],
+      hasUnresolvedEans: true,
+      isEdited: false,
     };
 
     it('should create workflow from provided invoice data', () => {

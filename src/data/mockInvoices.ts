@@ -5,6 +5,8 @@ interface MockInvoice {
   extractedData: InvoiceData;
 }
 
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
 export const mockInvoices: MockInvoice[] = [
   {
     event: {
@@ -15,15 +17,18 @@ export const mockInvoices: MockInvoice[] = [
     },
     extractedData: {
       supplier: 'ACME Corp',
+      supplierCode: '12345678000100',
       invoiceNumber: 'INV-2026-0892',
       date: '2026-03-28',
       total: 4521.0,
       currency: 'BRL',
       lineItems: [
-        { name: 'Blue Widget', sku: 'BW-001', quantity: 10, unitPrice: 150.0, isNewSku: false },
-        { name: 'Red Gadget', sku: null, quantity: 5, unitPrice: 200.0, isNewSku: true },
-        { name: 'Green Thing', sku: 'GT-042', quantity: 20, unitPrice: 89.0, isNewSku: false },
+        { id: generateId(), name: 'Blue Widget', supplierCode: 'BW-001', quantity: 10, unitPrice: 150.0, ean: '7891234567890', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
+        { id: generateId(), name: 'Red Gadget', supplierCode: 'RG-002', quantity: 5, unitPrice: 200.0, ean: null, eanStatus: 'unknown', eanSource: null, isEdited: false, isNewProduct: true },
+        { id: generateId(), name: 'Green Thing', supplierCode: 'GT-042', quantity: 20, unitPrice: 89.0, ean: '7898765432100', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
       ],
+      hasUnresolvedEans: true,
+      isEdited: false,
     },
   },
   {
@@ -35,16 +40,19 @@ export const mockInvoices: MockInvoice[] = [
     },
     extractedData: {
       supplier: 'Globex Inc',
+      supplierCode: '98765432000100',
       invoiceNumber: 'G-7821',
       date: '2026-03-29',
       total: 12350.0,
       currency: 'BRL',
       lineItems: [
-        { name: 'Quantum Capacitor', sku: 'QC-100', quantity: 50, unitPrice: 85.0, isNewSku: false },
-        { name: 'Flux Compensator', sku: null, quantity: 10, unitPrice: 450.0, isNewSku: true },
-        { name: 'Hyperdrive Module', sku: null, quantity: 5, unitPrice: 320.0, isNewSku: true },
-        { name: 'Standard Bolt Pack', sku: 'SBP-001', quantity: 100, unitPrice: 12.0, isNewSku: false },
+        { id: generateId(), name: 'Quantum Capacitor', supplierCode: 'QC-100', quantity: 50, unitPrice: 85.0, ean: '7891111111111', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
+        { id: generateId(), name: 'Flux Compensator', supplierCode: 'FC-200', quantity: 10, unitPrice: 450.0, ean: null, eanStatus: 'unknown', eanSource: null, isEdited: false, isNewProduct: true },
+        { id: generateId(), name: 'Hyperdrive Module', supplierCode: 'HM-300', quantity: 5, unitPrice: 320.0, ean: null, eanStatus: 'unknown', eanSource: null, isEdited: false, isNewProduct: true },
+        { id: generateId(), name: 'Standard Bolt Pack', supplierCode: 'SBP-001', quantity: 100, unitPrice: 12.0, ean: '7892222222222', eanStatus: 'resolved', eanSource: 'mapping', isEdited: false, isNewProduct: false },
       ],
+      hasUnresolvedEans: true,
+      isEdited: false,
     },
   },
   {
@@ -56,14 +64,17 @@ export const mockInvoices: MockInvoice[] = [
     },
     extractedData: {
       supplier: 'Wayne Enterprises',
+      supplierCode: '55555555000100',
       invoiceNumber: 'WE-2026-445',
       date: '2026-03-30',
       total: 8900.0,
       currency: 'BRL',
       lineItems: [
-        { name: 'Bat-Widget Pro', sku: null, quantity: 25, unitPrice: 200.0, isNewSku: true },
-        { name: 'Night Vision Sensor', sku: 'NVS-007', quantity: 15, unitPrice: 260.0, isNewSku: false },
+        { id: generateId(), name: 'Bat-Widget Pro', supplierCode: 'BWP-001', quantity: 25, unitPrice: 200.0, ean: null, eanStatus: 'unknown', eanSource: null, isEdited: false, isNewProduct: true },
+        { id: generateId(), name: 'Night Vision Sensor', supplierCode: 'NVS-007', quantity: 15, unitPrice: 260.0, ean: '7893333333333', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
       ],
+      hasUnresolvedEans: true,
+      isEdited: false,
     },
   },
   {
@@ -75,14 +86,17 @@ export const mockInvoices: MockInvoice[] = [
     },
     extractedData: {
       supplier: 'Stark Industries',
+      supplierCode: '44444444000100',
       invoiceNumber: 'SI-99001',
       date: '2026-03-30',
       total: 25000.0,
       currency: 'BRL',
       lineItems: [
-        { name: 'Arc Reactor Mini', sku: 'ARM-001', quantity: 2, unitPrice: 10000.0, isNewSku: false },
-        { name: 'Repulsor Kit', sku: 'RPK-050', quantity: 10, unitPrice: 500.0, isNewSku: false },
+        { id: generateId(), name: 'Arc Reactor Mini', supplierCode: 'ARM-001', quantity: 2, unitPrice: 10000.0, ean: '7894444444444', eanStatus: 'resolved', eanSource: 'extracted', isEdited: false, isNewProduct: false },
+        { id: generateId(), name: 'Repulsor Kit', supplierCode: 'RPK-050', quantity: 10, unitPrice: 500.0, ean: '7895555555555', eanStatus: 'resolved', eanSource: 'mapping', isEdited: false, isNewProduct: false },
       ],
+      hasUnresolvedEans: false,
+      isEdited: false,
     },
   },
 ];
