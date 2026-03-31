@@ -56,6 +56,26 @@ export S3_BUCKET=workflow-inbox-1774912847
 ./scripts/deploy-manual.sh
 ```
 
+### CI/CD (Automatic Deployment)
+
+Pushes to `main` automatically deploy via GitHub Actions.
+
+**One-time setup:**
+```bash
+# 1. Run the OIDC setup script
+./scripts/setup-github-oidc.sh
+
+# 2. Add the output role ARN to GitHub Secrets:
+#    Settings > Secrets > Actions > New secret
+#    Name: AWS_DEPLOY_ROLE_ARN
+#    Value: <role ARN from script output>
+```
+
+After setup, every push to `main` will:
+1. Run tests
+2. Build frontend
+3. Deploy infrastructure and website via CDK
+
 ## Architecture
 
 ```

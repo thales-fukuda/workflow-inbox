@@ -204,3 +204,36 @@ npm test -- src/store/workflowStore.test.ts
 - Clear CloudFront cache if using CDN
 - Check S3 bucket policy allows public read
 - Verify `index.html` exists in bucket root
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for automated deployment on every push to `main`.
+
+### How It Works
+1. **Test job**: Runs on every push/PR - installs deps, runs tests, lints
+2. **Deploy job**: Runs only on `main` push after tests pass - builds and deploys via CDK
+
+### Pipeline Files
+- `.github/workflows/deploy.yml` - Main workflow
+- `infra/lib/github-oidc-stack.ts` - IAM role for GitHub Actions (OIDC)
+
+### Setting Up CI/CD (One-Time)
+
+```bash
+# Run the setup script
+./scripts/setup-github-oidc.sh
+
+# Then add the role ARN to GitHub Secrets:
+# Settings > Secrets > Actions > New secret
+# Name: AWS_DEPLOY_ROLE_ARN
+# Value: (output from script)
+```
+
+### Manual Trigger
+You can also trigger deployments manually from GitHub Actions tab.
+
+### Debugging Failed Deployments
+1. Check GitHub Actions logs
+2. Verify `AWS_DEPLOY_ROLE_ARN` secret is set
+3. Ensure CDK is bootstrapped in the target account/region
+4. Check IAM role has required permissions
