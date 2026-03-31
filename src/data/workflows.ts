@@ -1,0 +1,123 @@
+import type { Workflow } from '../types';
+
+export const WORKFLOWS: Record<string, Workflow> = {
+  'invoice-processing': {
+    id: 'invoice-processing',
+    name: 'Invoice Processing',
+    description: 'Process supplier invoices from email or upload',
+    icon: '📄',
+    category: 'Finance',
+    triggerType: 'email',
+    requiresReview: true,
+    steps: [
+      {
+        id: 'extract',
+        type: 'ai_skill',
+        name: 'Extract Invoice Data',
+        description: 'AI extracts structured data from invoice document',
+        config: { skill: 'invoice-extraction' },
+      },
+      {
+        id: 'review',
+        type: 'review',
+        name: 'Review Extracted Data',
+        description: 'Human reviews and corrects extracted data',
+        assignTo: 'reviewer',
+        config: {},
+      },
+      {
+        id: 'check-amount',
+        type: 'condition',
+        name: 'Check Amount',
+        description: 'Route based on invoice amount',
+        condition: 'data.total > 10000',
+        thenStep: 'finance-approval',
+        elseStep: 'match-po',
+        config: {},
+      },
+      {
+        id: 'finance-approval',
+        type: 'human',
+        name: 'Finance Approval',
+        description: 'Finance manager approves high-value invoice',
+        assignTo: 'finance',
+        config: { actionRequired: 'Approve invoice over $10,000' },
+      },
+      {
+        id: 'match-po',
+        type: 'ai_skill',
+        name: 'Match to Purchase Order',
+        description: 'AI matches invoice to existing PO',
+        config: { skill: 'po-matching' },
+      },
+      {
+        id: 'create-erp',
+        type: 'connector',
+        name: 'Create in ERP',
+        description: 'Create invoice record in ERP system',
+        config: { connector: 'erp', action: 'create_invoice' },
+      },
+      {
+        id: 'send-confirmation',
+        type: 'connector',
+        name: 'Send Confirmation',
+        description: 'Send confirmation email to supplier',
+        config: { connector: 'email', action: 'send' },
+      },
+    ],
+  },
+
+  'purchase-request': {
+    id: 'purchase-request',
+    name: 'Purchase Request',
+    description: 'Submit and approve purchase requests',
+    icon: '🛒',
+    category: 'Procurement',
+    triggerType: 'manual',
+    requiresReview: true,
+    steps: [
+      {
+        id: 'review',
+        type: 'review',
+        name: 'Complete Request Details',
+        description: 'Requester fills in purchase details',
+        config: {},
+      },
+      {
+        id: 'check-amount',
+        type: 'condition',
+        name: 'Check Amount',
+        description: 'Route based on request amount',
+        condition: 'data.totalEstimate > 5000',
+        thenStep: 'manager-approval',
+        elseStep: 'ops-verification',
+        config: {},
+      },
+      {
+        id: 'manager-approval',
+        type: 'human',
+        name: 'Manager Approval',
+        description: 'Manager approves high-value request',
+        assignTo: 'finance',
+        config: { actionRequired: 'Approve purchase request over $5,000' },
+      },
+      {
+        id: 'ops-verification',
+        type: 'human',
+        name: 'Operations Verification',
+        description: 'Operations verifies stock and availability',
+        assignTo: 'operations',
+        config: { actionRequired: 'Verify stock availability' },
+      },
+      {
+        id: 'create-po',
+        type: 'connector',
+        name: 'Create Purchase Order',
+        description: 'Create PO in procurement system',
+        config: { connector: 'erp', action: 'create_po' },
+      },
+    ],
+  },
+};
+
+export const getWorkflow = (id: string): Workflow | undefined => WORKFLOWS[id];

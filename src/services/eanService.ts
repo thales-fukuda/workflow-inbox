@@ -1,6 +1,14 @@
-import type { EanSuggestion } from '../types';
-
 const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v2';
+
+// EAN suggestion from external sources
+export interface EanSuggestion {
+  ean: string;
+  productName: string;
+  brand?: string;
+  confidence: number;
+  source: string;
+  imageUrl?: string;
+}
 
 interface OpenFoodFactsProduct {
   code: string;

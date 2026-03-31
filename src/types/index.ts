@@ -1,135 +1,192 @@
-export type WorkflowStatus =
-  | 'pending_approval'
-  | 'approved'
-  | 'running'
-  | 'completed'
-  | 'failed';
+// ============================================================================
+// CORE TYPES - GlobGlob Workflow Platform
+// ============================================================================
 
-export type TaskStatus =
+// ----------------------------------------------------------------------------
+// Roles & Permissions
+// ----------------------------------------------------------------------------
+
+export type RoleId = 'admin' | 'reviewer' | 'finance' | 'operations';
+
+export interface Role {
+  id: RoleId;
+  name: string;
+  description: string;
+  color: string;
+}
+
+// ----------------------------------------------------------------------------
+// Task States
+// ----------------------------------------------------------------------------
+
+export type TaskState =
+  | 'created'
+  | 'review'
+  | 'running'
+  | 'waiting_human'
+  | 'waiting_external'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+export type StepState =
   | 'pending'
   | 'running'
+  | 'waiting'
   | 'completed'
   | 'failed'
   | 'skipped';
 
-export type EanStatus = 'resolved' | 'suggested' | 'manual' | 'unknown';
-export type EanSource = 'extracted' | 'mapping' | 'database' | 'user';
+// ----------------------------------------------------------------------------
+// Workflows & Steps
+// ----------------------------------------------------------------------------
 
-export interface Skill {
+export type StepType =
+  | 'ai_skill'
+  | 'connector'
+  | 'human'
+  | 'review'
+  | 'condition';
+
+export interface WorkflowStep {
   id: string;
+  type: StepType;
   name: string;
-  description: string;
-  estimatedDuration: number; // ms
+  description?: string;
+  config: Record<string, unknown>;
+  // For human/review steps
+  assignTo?: RoleId;
+  // For conditions
+  condition?: string;
+  thenStep?: string;
+  elseStep?: string;
 }
 
-export interface Task {
-  id: string;
-  skillId: string;
-  name: string;
-  description: string;
-  status: TaskStatus;
-  result?: unknown;
-  error?: string;
-  startedAt?: Date;
-  completedAt?: Date;
-}
-
-export interface EanSuggestion {
-  ean: string;
-  productName: string;
-  brand?: string;
-  confidence: number;
-  source: string;
-  imageUrl?: string;
-}
-
-export interface LineItem {
-  id: string;
-  name: string;
-  supplierCode: string | null;
-  quantity: number;
-  unitPrice: number;
-
-  // EAN Resolution
-  ean: string | null;
-  eanStatus: EanStatus;
-  eanSource: EanSource | null;
-  eanConfidence?: number;
-  eanSuggestions?: EanSuggestion[];
-
-  // Tracking
-  isEdited: boolean;
-  isNewProduct: boolean;
-}
-
-export interface InvoiceData {
-  supplier: string;
-  supplierCode?: string;
-  invoiceNumber: string;
-  date: string;
-  total: number;
-  currency: string;
-  lineItems: LineItem[];
-
-  // Validation
-  hasUnresolvedEans: boolean;
-  isEdited: boolean;
-}
-
-export interface Event {
-  id: string;
-  type: 'email_received';
-  source: string;
-  subject: string;
-  attachment?: string;
-  receivedAt: Date;
-}
-
-export interface WorkflowInstance {
-  id: string;
-  workflowType: 'invoice_processing' | 'inventory_sync' | 'financial_report';
-  status: WorkflowStatus;
-  event: Event;
-  extractedData?: InvoiceData;
-  tasks: Task[];
-  currentTaskIndex: number;
-  createdAt: Date;
-  approvedAt?: Date;
-  completedAt?: Date;
-  retryCount: number;
-  maxRetries: number;
-}
-
-export interface WorkflowTemplate {
+export interface Workflow {
   id: string;
   name: string;
   description: string;
   icon: string;
-  skillIds: string[];
+  category: string;
+  triggerType: 'email' | 'manual' | 'schedule' | 'webhook';
+  requiresReview: boolean;
+  steps: WorkflowStep[];
 }
 
-// Product Catalog
-export interface Product {
+// ----------------------------------------------------------------------------
+// Tasks (Workflow Instances)
+// ----------------------------------------------------------------------------
+
+export interface StepExecution {
+  stepId: string;
+  state: StepState;
+  startedAt?: Date;
+  completedAt?: Date;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: string;
+  assignedTo?: RoleId;
+  actionRequired?: string;
+}
+
+export interface Task {
   id: string;
-  ean: string;
-  name: string;
-  brand?: string;
-  category?: string;
-  imageUrl?: string;
+  workflowId: string;
+  title: string;
+  state: TaskState;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  tags: string[];
+
+  // Data
+  data: Record<string, unknown>;
+
+  // Execution
+  currentStepId: string | null;
+  stepExecutions: StepExecution[];
+
+  // Assignment
+  assignedTo?: RoleId;
+
+  // Timestamps
   createdAt: Date;
   updatedAt: Date;
-  source: 'manual' | 'invoice' | 'api';
+  completedAt?: Date;
+
+  // Source
+  triggeredBy: string;
+  triggerData?: Record<string, unknown>;
 }
 
-// Supplier Mapping
-export interface SupplierProductMapping {
+// ----------------------------------------------------------------------------
+// Queues
+// ----------------------------------------------------------------------------
+
+export interface Queue {
   id: string;
-  supplierId: string;
-  supplierName: string;
-  supplierProductCode: string;
-  supplierProductName: string;
-  ean: string;
-  confidence: 'manual' | 'confirmed' | 'suggested';
+  name: string;
+  icon: string;
+  filter: {
+    states?: TaskState[];
+    assignedTo?: RoleId;
+    tags?: string[];
+    workflowIds?: string[];
+  };
+  roleAccess: RoleId[];
+}
+
+// ----------------------------------------------------------------------------
+// Simulation
+// ----------------------------------------------------------------------------
+
+export interface PendingExternalAction {
+  id: string;
+  taskId: string;
+  stepId: string;
+  system: string;
+  action: string;
+  description: string;
   createdAt: Date;
-  lastSeenAt: Date;
+}
+
+// ----------------------------------------------------------------------------
+// Invoice Data (for demo)
+// ----------------------------------------------------------------------------
+
+export interface LineItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  ean?: string;
+}
+
+export interface InvoiceData {
+  supplier: string;
+  supplierTaxId?: string;
+  invoiceNumber: string;
+  date: string;
+  currency: string;
+  lineItems: LineItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+// ----------------------------------------------------------------------------
+// Purchase Request Data (for demo)
+// ----------------------------------------------------------------------------
+
+export interface PurchaseRequestData {
+  requester: string;
+  department: string;
+  items: {
+    description: string;
+    quantity: number;
+    estimatedPrice: number;
+    urgency: 'low' | 'medium' | 'high';
+  }[];
+  justification: string;
+  totalEstimate: number;
+  neededBy?: string;
 }

@@ -16,7 +16,7 @@ npm run build        # Build for production
 
 ## Project Overview
 
-**GlobGlob** is an AI-powered invoice processing platform for e-commerce operations.
+**GlobGlob** is an AI-powered workflow automation platform with human-in-the-loop review capabilities. It supports customizable workflows, role-based task routing, and simulation for testing.
 
 | Component | Technology | Location |
 |-----------|------------|----------|
@@ -124,16 +124,18 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 globglob/
 ├── src/                        # Frontend source code
 │   ├── components/             # React components
-│   │   ├── Inbox.tsx           # Main workflow list
-│   │   ├── WorkflowDetail.tsx  # Workflow detail + editing
-│   │   ├── WorkflowCard.tsx    # List item card
-│   │   ├── ProductCatalog.tsx  # Product database view
-│   │   ├── EanSearchModal.tsx  # EAN lookup/entry modal
-│   │   ├── UploadModal.tsx     # Invoice upload
+│   │   ├── Header.tsx          # App header with role switcher
+│   │   ├── Sidebar.tsx         # Queue navigation
+│   │   ├── TaskList.tsx        # Task list by queue
+│   │   ├── TaskDetail.tsx      # Full task view with actions
+│   │   ├── ReviewForm.tsx      # Data review forms (invoice, PR)
+│   │   ├── ActionForm.tsx      # Human action forms
+│   │   ├── WorkflowProgress.tsx # Step progress indicator
+│   │   ├── SimulationPanel.tsx # Mock task creation & external actions
 │   │   └── LanguageSwitcher.tsx
 │   ├── store/                  # Zustand state management
-│   │   ├── workflowStore.ts    # Workflow state + actions
-│   │   └── productStore.ts     # Product catalog (persisted)
+│   │   ├── taskStore.ts        # Task state, execution, filtering
+│   │   └── roleStore.ts        # Role management
 │   ├── services/               # External API integrations
 │   │   └── eanService.ts       # EAN validation + Open Food Facts
 │   ├── types/                  # TypeScript type definitions
@@ -142,9 +144,9 @@ globglob/
 │   ├── i18n/                   # Internationalization
 │   │   ├── translations.ts     # EN + PT-BR strings
 │   │   └── LanguageContext.tsx # Language provider
-│   ├── data/                   # Static/mock data
-│   │   ├── mockInvoices.ts     # Sample invoice data
-│   │   └── skills.ts           # Workflow skill definitions
+│   ├── data/                   # Static/configuration data
+│   │   ├── workflows.ts        # Workflow definitions (steps, config)
+│   │   └── queues.ts           # Queue definitions (filters, access)
 │   ├── utils/                  # Utility functions
 │   │   └── formatTime.ts       # Date/currency formatting
 │   ├── App.tsx                 # Root component
@@ -186,7 +188,7 @@ function calculateTotal(items: LineItem[]): number {
 }
 
 // Use `import type` for type-only imports (required for build)
-import type { WorkflowInstance, LineItem } from '../types';
+import type { Task, Workflow, WorkflowStep } from '../types';
 
 // Prefer interfaces over type aliases for objects
 interface Product {
@@ -226,7 +228,7 @@ export const Button = ({ onClick, disabled = false, children }: ButtonProps) => 
 ### Zustand Stores
 
 ```typescript
-// Follow existing pattern in workflowStore.ts
+// Follow existing pattern in taskStore.ts
 interface MyStore {
   // State
   items: Item[];
@@ -290,52 +292,67 @@ const { t } = useLanguage();
 
 ## Key Types
 
-### LineItem
+### Task
 ```typescript
-interface LineItem {
+interface Task {
   id: string;
-  name: string;
-  supplierCode: string | null;
-  quantity: number;
-  unitPrice: number;
-  ean: string | null;
-  eanStatus: 'resolved' | 'suggested' | 'manual' | 'unknown';
-  eanSource: 'extracted' | 'mapping' | 'database' | 'user' | null;
-  isEdited: boolean;
-  isNewProduct: boolean;
+  workflowId: string;
+  title: string;
+  state: TaskState;  // created | review | running | waiting_human | waiting_external | paused | completed | failed | cancelled
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  tags: string[];
+  data: Record<string, unknown>;
+  currentStepId: string | null;
+  stepExecutions: StepExecution[];
+  assignedTo?: RoleId;
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+  triggeredBy: string;
 }
 ```
 
-### InvoiceData
+### Workflow
+```typescript
+interface Workflow {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  triggerType: 'email' | 'manual' | 'schedule' | 'webhook';
+  requiresReview: boolean;
+  steps: WorkflowStep[];
+}
+```
+
+### WorkflowStep
+```typescript
+interface WorkflowStep {
+  id: string;
+  type: StepType;  // ai_skill | connector | human | review | condition
+  name: string;
+  description?: string;
+  config: Record<string, unknown>;
+  assignTo?: RoleId;
+  condition?: string;
+  thenStep?: string;
+  elseStep?: string;
+}
+```
+
+### InvoiceData (for demo workflows)
 ```typescript
 interface InvoiceData {
   supplier: string;
-  supplierCode?: string;
+  supplierTaxId?: string;
   invoiceNumber: string;
   date: string;
-  total: number;
   currency: string;
   lineItems: LineItem[];
-  hasUnresolvedEans: boolean;
-  isEdited: boolean;
-}
-```
-
-### WorkflowInstance
-```typescript
-interface WorkflowInstance {
-  id: string;
-  workflowType: 'invoice_processing' | 'inventory_sync' | 'financial_report';
-  status: 'pending_approval' | 'approved' | 'running' | 'completed' | 'failed';
-  event: Event;
-  extractedData?: InvoiceData;
-  tasks: Task[];
-  currentTaskIndex: number;
-  createdAt: Date;
-  approvedAt?: Date;
-  completedAt?: Date;
-  retryCount: number;
-  maxRetries: number;
+  subtotal: number;
+  tax: number;
+  total: number;
 }
 ```
 
@@ -388,7 +405,7 @@ npm test -- src/store/workflowStore   # Specific file
 
 ### Test File Naming
 - `*.test.ts` or `*.test.tsx` next to source file
-- Example: `src/store/workflowStore.ts` → `src/store/workflowStore.test.ts`
+- Example: `src/types/index.ts` → `src/types/index.test.ts`
 
 ### Writing Tests
 ```typescript
