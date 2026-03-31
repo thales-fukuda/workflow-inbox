@@ -1,0 +1,5 @@
+{
+  "GlobGlobOidc": {
+    "DeployRoleArn": "arn:aws:iam::101487848346:role/GlobGlob-GitHubActions-DeployRole"
+  }
+}
