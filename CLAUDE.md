@@ -2,6 +2,8 @@
 
 > This document enables AI agents and developers to work on this codebase effectively out of the box.
 
+**IMPORTANT FOR AGENTS**: Keep this documentation up to date. After making code changes, review and update relevant sections of CLAUDE.md, README.md, and CONTRIBUTING.md if your changes affect project structure, APIs, types, workflows, or add new features.
+
 ## Quick Reference
 
 ```bash
@@ -44,6 +46,29 @@ npm run build        # Build for production
 2. **Run tests**: `npm test`
 3. **Run lint**: `npm run lint`
 4. **Fix any errors** before committing
+5. **Update documentation** if needed (see below)
+
+### Updating Documentation
+
+**After making changes, update docs if you:**
+- Add/remove/rename files → Update "Project Structure" section
+- Add new types or modify existing → Update "Key Types" section
+- Add new components → Add to structure, add "Common Tasks" if pattern is reusable
+- Change API endpoints → Update API section
+- Add new scripts/commands → Update "Quick Reference" and scripts table
+- Add new environment variables → Update environment table
+- Change CI/CD workflow → Update "CI/CD Pipeline" section
+- Add new AWS resources → Update "AWS Resources" table
+- Discover new troubleshooting issues → Add to "Troubleshooting"
+
+**Files to update:**
+| Change Type | Update |
+|-------------|--------|
+| New feature | CLAUDE.md (structure, types, tasks), README.md (features) |
+| API change | CLAUDE.md (API section) |
+| New script | CLAUDE.md (Quick Reference), README.md (Scripts table) |
+| Infra change | CLAUDE.md (AWS Resources) |
+| Bug fix with learnings | CLAUDE.md (Troubleshooting) |
 
 ### Committing Changes
 
@@ -516,3 +541,75 @@ npm run dev
 ./scripts/setup-github-oidc.sh
 # Follow output instructions to add GitHub secret
 ```
+
+---
+
+## Documentation Maintenance
+
+> **CRITICAL**: Documentation must stay in sync with code. Outdated docs cause confusion and errors for future agents and developers.
+
+### When to Update Docs
+
+**Always update documentation when you:**
+
+| Change | Files to Update |
+|--------|-----------------|
+| Add new component | CLAUDE.md (Project Structure) |
+| Add new type/interface | CLAUDE.md (Key Types) |
+| Add new store/action | CLAUDE.md (Coding Conventions - Zustand) |
+| Add new API endpoint | CLAUDE.md (API section if exists) |
+| Add new script | CLAUDE.md (Quick Reference), README.md |
+| Add new translation keys | Note pattern in CLAUDE.md if new |
+| Change project structure | CLAUDE.md, README.md |
+| Add AWS resource | CLAUDE.md (AWS Resources table) |
+| Fix tricky bug | CLAUDE.md (Troubleshooting) |
+| Change CI/CD | CLAUDE.md (CI/CD Pipeline) |
+| Add new dependency | README.md (Tech Stack) if significant |
+
+### Documentation Files
+
+| File | Purpose | Update Frequency |
+|------|---------|------------------|
+| `CLAUDE.md` | Agent/developer guide, technical details | Every significant change |
+| `README.md` | Project overview, quick start | New features, structure changes |
+| `CONTRIBUTING.md` | Quick contribution checklist | Workflow changes |
+
+### Example: Adding a New Feature
+
+If you add a new "Reports" feature:
+
+1. **Code changes**: Add components, store, types
+2. **CLAUDE.md updates**:
+   - Add to Project Structure (new files)
+   - Add ReportData type to Key Types
+   - Add "Creating a Report" to Common Tasks
+3. **README.md updates**:
+   - Add "Reports" to Features list
+4. **Commit message**:
+   ```
+   feat: Add reports feature with PDF export
+   
+   - ReportsView component for viewing reports
+   - reportStore for state management
+   - PDF generation service
+   - Updated CLAUDE.md and README.md
+   
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   ```
+
+### Self-Check Before Commit
+
+Ask yourself:
+1. Did I add new files? → Update Project Structure
+2. Did I add new types? → Update Key Types
+3. Did I add new commands/scripts? → Update Quick Reference
+4. Did I learn something tricky? → Add to Troubleshooting
+5. Would another agent be confused? → Add clarification
+
+### Keeping Docs Concise
+
+- Don't document obvious code
+- Focus on "why" and "how to use", not "what it does"
+- Use tables for reference data
+- Use code blocks for examples
+- Keep troubleshooting actionable (problem → solution)

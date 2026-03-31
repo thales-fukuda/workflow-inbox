@@ -5,7 +5,19 @@
 Before committing:
 - [ ] `npm test` passes
 - [ ] `npm run lint` passes
+- [ ] Documentation updated (if needed)
 - [ ] Commit message follows format
+
+## Documentation Requirements
+
+**Update docs when you change:**
+- Project structure → CLAUDE.md, README.md
+- Types/interfaces → CLAUDE.md (Key Types)
+- Scripts/commands → CLAUDE.md (Quick Reference)
+- AWS resources → CLAUDE.md (AWS Resources)
+- Features → README.md (Features list)
+
+See CLAUDE.md "Documentation Maintenance" section for details.
 
 ## Commit Message Format
 
@@ -27,6 +39,7 @@ npm install                   # Install deps
 # ... make changes ...
 npm test                      # Must pass
 npm run lint                  # Must pass
+# ... update docs if needed ...
 git add -A
 git commit -m "type: description
 
