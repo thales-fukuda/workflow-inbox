@@ -108,10 +108,9 @@ export const WorkflowDetail = ({
     updateLineItem(workflow.id, itemId, { unitPrice: Math.max(0, unitPrice) });
   };
 
-  const handleEanSelect = (ean: string, productName?: string, _saveMapping?: boolean) => {
+  const handleEanSelect = (ean: string, productName?: string) => {
     if (eanModalItem) {
       resolveEan(workflow.id, eanModalItem.id, ean, productName);
-      // TODO: Save mapping to productStore if _saveMapping is true
     }
     setEanModalItem(null);
   };
