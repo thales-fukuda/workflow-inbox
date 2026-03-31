@@ -3,6 +3,7 @@ import { WORKFLOWS } from '../data/workflows';
 import { WorkflowProgress } from './WorkflowProgress';
 import { ReviewForm } from './ReviewForm';
 import { ActionForm } from './ActionForm';
+import { Icon } from './Icon';
 import type { TaskState } from '../types';
 
 interface TaskDetailProps {
@@ -56,7 +57,9 @@ export const TaskDetail = ({ taskId }: TaskDetailProps) => {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <span className="text-2xl">{workflow?.icon || '📄'}</span>
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+                <Icon name={workflow?.icon || 'document'} size={20} />
+              </div>
               <h1 className="text-xl font-semibold text-gray-900">{task.title}</h1>
             </div>
             <p className="text-sm text-gray-500">
@@ -81,9 +84,9 @@ export const TaskDetail = ({ taskId }: TaskDetailProps) => {
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
-        <div className="grid grid-cols-3 gap-6">
-          {/* Main Content - 2 columns */}
-          <div className="col-span-2 space-y-6">
+        <div className="grid grid-cols-4 gap-6">
+          {/* Main Content - 3 columns */}
+          <div className="col-span-3 space-y-6">
             {/* Review Form */}
             {task.state === 'review' && (
               <div className="card">

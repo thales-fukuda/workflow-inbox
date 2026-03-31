@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTaskStore } from '../store/taskStore';
 import { WORKFLOWS } from '../data/workflows';
+import { Icon } from './Icon';
 import type { InvoiceData, PurchaseRequestData } from '../types';
 
 export const SimulationPanel = () => {
@@ -37,7 +38,7 @@ export const SimulationPanel = () => {
         className="fixed bottom-4 right-4 w-12 h-12 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center z-50"
         title="Simulation Panel"
       >
-        <span className="text-xl">⚙</span>
+        <Icon name="cog" size={24} />
       </button>
 
       {/* Panel */}
@@ -50,7 +51,7 @@ export const SimulationPanel = () => {
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                ✕
+                <Icon name="x-mark" size={16} />
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -72,7 +73,7 @@ export const SimulationPanel = () => {
                 >
                   {Object.entries(WORKFLOWS).map(([id, workflow]) => (
                     <option key={id} value={id}>
-                      {workflow.icon} {workflow.name}
+                      {workflow.name}
                     </option>
                   ))}
                 </select>

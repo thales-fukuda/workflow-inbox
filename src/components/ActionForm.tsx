@@ -1,3 +1,4 @@
+import { Icon } from './Icon';
 import type { Task, WorkflowStep, StepExecution } from '../types';
 
 interface ActionFormProps {
@@ -15,7 +16,9 @@ export const ActionForm = ({ task, step, stepExecution }: ActionFormProps) => {
       {/* Action Description */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
         <div className="flex items-start gap-3">
-          <span className="text-xl">⚠️</span>
+          <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Icon name="warning" size={18} className="text-amber-600" />
+          </div>
           <div>
             <h3 className="font-medium text-amber-900">{step.name}</h3>
             <p className="text-sm text-amber-700 mt-1">

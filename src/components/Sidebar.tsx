@@ -1,6 +1,7 @@
 import { useRoleStore } from '../store/roleStore';
 import { useTaskStore } from '../store/taskStore';
 import { getQueuesForRole } from '../data/queues';
+import { Icon } from './Icon';
 
 interface SidebarProps {
   selectedQueueId: string;
@@ -32,7 +33,7 @@ export const Sidebar = ({ selectedQueueId, onSelectQueue }: SidebarProps) => {
         }`}
       >
         <span className="flex items-center gap-2">
-          <span>{queue.icon}</span>
+          <Icon name={queue.icon} size={16} />
           <span className="font-medium">{queue.name}</span>
         </span>
         {count > 0 && (

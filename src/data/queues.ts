@@ -4,7 +4,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'my-review',
     name: 'My Review',
-    icon: '📋',
+    icon: 'clipboard',
     filter: {
       states: ['review'],
     },
@@ -13,7 +13,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'my-actions',
     name: 'My Actions',
-    icon: '⚡',
+    icon: 'bolt',
     filter: {
       states: ['waiting_human'],
     },
@@ -22,7 +22,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'in-progress',
     name: 'In Progress',
-    icon: '🔄',
+    icon: 'refresh',
     filter: {
       states: ['running', 'waiting_external'],
     },
@@ -31,7 +31,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'completed',
     name: 'Completed',
-    icon: '✓',
+    icon: 'check-circle',
     filter: {
       states: ['completed'],
     },
@@ -40,7 +40,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'failed',
     name: 'Failed',
-    icon: '⚠',
+    icon: 'warning',
     filter: {
       states: ['failed'],
     },
@@ -49,7 +49,7 @@ export const QUEUES: Queue[] = [
   {
     id: 'all',
     name: 'All Tasks',
-    icon: '📁',
+    icon: 'folder',
     filter: {},
     roleAccess: ['admin'],
   },

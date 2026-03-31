@@ -2,6 +2,7 @@ import { useTaskStore } from '../store/taskStore';
 import { useRoleStore } from '../store/roleStore';
 import { QUEUES } from '../data/queues';
 import { WORKFLOWS } from '../data/workflows';
+import { Icon } from './Icon';
 import type { Task, TaskState } from '../types';
 
 interface TaskListProps {
@@ -53,7 +54,7 @@ export const TaskList = ({ queueId }: TaskListProps) => {
       <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <span>{queue.icon}</span>
+            <Icon name={queue.icon} size={16} />
             {queue.name}
           </h2>
           <span className="text-xs text-gray-500">{tasks.length} tasks</span>
@@ -103,7 +104,7 @@ const TaskRow = ({ task, isSelected, onSelect }: TaskRowProps) => {
       {/* Top Row */}
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2">
-          <span className="text-base">{workflow?.icon || '📄'}</span>
+          <Icon name={workflow?.icon || 'document'} size={16} className="text-gray-500" />
           <span className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
             {task.title}
           </span>

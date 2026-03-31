@@ -93,7 +93,7 @@ describe('Type definitions', () => {
         id: 'test-workflow',
         name: 'Test Workflow',
         description: 'A test workflow',
-        icon: '📋',
+        icon: 'clipboard',
         category: 'test',
         triggerType: 'manual',
         requiresReview: true,

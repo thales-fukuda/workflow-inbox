@@ -4,6 +4,8 @@ import { Sidebar } from './components/Sidebar';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
 import { SimulationPanel } from './components/SimulationPanel';
+import { Tutorial } from './components/Tutorial';
+import { Icon } from './components/Icon';
 import { useTaskStore } from './store/taskStore';
 import './index.css';
 
@@ -34,7 +36,7 @@ function App() {
           ) : (
             <div className="h-full flex items-center justify-center text-gray-400">
               <div className="text-center">
-                <div className="text-4xl mb-2">📋</div>
+                <Icon name="clipboard" size={48} className="mx-auto mb-3 text-gray-300" />
                 <p className="text-sm">Select a task to view details</p>
               </div>
             </div>
@@ -44,6 +46,9 @@ function App() {
 
       {/* Simulation Panel */}
       {showSimPanel && <SimulationPanel />}
+
+      {/* Tutorial */}
+      <Tutorial />
     </div>
   );
 }

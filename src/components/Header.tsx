@@ -1,4 +1,6 @@
 import { useRoleStore, ROLES } from '../store/roleStore';
+import { Icon } from './Icon';
+import { TutorialButton } from './Tutorial';
 import type { RoleId } from '../types';
 
 interface HeaderProps {
@@ -25,12 +27,15 @@ export const Header = ({ onToggleSimPanel, showSimPanel }: HeaderProps) => {
 
       {/* Right Side */}
       <div className="flex items-center gap-4">
+        {/* Help Button */}
+        <TutorialButton />
+
         {/* Simulation Toggle */}
         <button
           onClick={onToggleSimPanel}
-          className={`btn btn-sm ${showSimPanel ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn btn-sm ${showSimPanel ? 'btn-primary' : 'btn-secondary'} flex items-center gap-1.5`}
         >
-          <span className="mr-1.5">🔧</span>
+          <Icon name="cog" size={14} />
           Simulation
         </button>
 

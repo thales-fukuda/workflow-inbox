@@ -1,4 +1,5 @@
 import { WORKFLOWS } from '../data/workflows';
+import { Icon } from './Icon';
 import type { Task, StepState } from '../types';
 
 interface WorkflowProgressProps {
@@ -6,12 +7,12 @@ interface WorkflowProgressProps {
 }
 
 const STEP_ICONS: Record<StepState, string> = {
-  pending: '○',
-  running: '●',
-  waiting: '◐',
-  completed: '✓',
-  failed: '✗',
-  skipped: '–',
+  pending: 'circle-empty',
+  running: 'circle-dot',
+  waiting: 'circle-half',
+  completed: 'check',
+  failed: 'x-mark',
+  skipped: 'minus',
 };
 
 export const WorkflowProgress = ({ task }: WorkflowProgressProps) => {
@@ -22,7 +23,7 @@ export const WorkflowProgress = ({ task }: WorkflowProgressProps) => {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {workflow.steps.map((step) => {
         const execution = task.stepExecutions.find((se) => se.stepId === step.id);
         const state = execution?.state || 'pending';
@@ -31,45 +32,39 @@ export const WorkflowProgress = ({ task }: WorkflowProgressProps) => {
         return (
           <div
             key={step.id}
-            className={`flex items-start gap-3 py-2 px-2 rounded-md ${
+            className={`flex items-center gap-2 py-1.5 px-2 rounded ${
               isCurrent ? 'bg-blue-50' : ''
             }`}
           >
             {/* Step Indicator */}
-            <div className={`step-indicator step-${state}`}>
+            <div className={`step-indicator step-${state} flex-shrink-0`}>
               {state === 'running' ? (
-                <span className="animate-spin">◌</span>
+                <Icon name="refresh" size={12} className="animate-spin" />
               ) : (
-                STEP_ICONS[state]
+                <Icon name={STEP_ICONS[state]} size={12} />
               )}
             </div>
 
             {/* Step Info */}
             <div className="flex-1 min-w-0">
               <p
-                className={`text-sm font-medium ${
+                className={`text-xs font-medium truncate ${
                   state === 'completed'
-                    ? 'text-gray-500'
+                    ? 'text-gray-400'
                     : state === 'pending'
                     ? 'text-gray-400'
-                    : 'text-gray-900'
+                    : 'text-gray-700'
                 }`}
               >
                 {step.name}
               </p>
-              {step.description && (
-                <p className="text-xs text-gray-400 truncate">{step.description}</p>
-              )}
               {execution?.actionRequired && state === 'waiting' && (
-                <p className="text-xs text-amber-600 mt-0.5">{execution.actionRequired}</p>
+                <p className="text-xs text-amber-600 truncate">{execution.actionRequired}</p>
               )}
               {execution?.error && (
-                <p className="text-xs text-red-600 mt-0.5">{execution.error}</p>
+                <p className="text-xs text-red-600 truncate">{execution.error}</p>
               )}
             </div>
-
-            {/* Step Type Badge */}
-            <span className="text-xs text-gray-400 capitalize">{step.type.replace('_', ' ')}</span>
           </div>
         );
       })}
