@@ -180,7 +180,7 @@ describe('workflowStore', () => {
 
   describe('retryWorkflow', () => {
     it('should increment retry count', async () => {
-      const { simulateInvoiceEmail, approveWorkflow, retryWorkflow } = useWorkflowStore.getState();
+      const { simulateInvoiceEmail, retryWorkflow } = useWorkflowStore.getState();
 
       simulateInvoiceEmail();
       const workflowId = useWorkflowStore.getState().workflows[0].id;
