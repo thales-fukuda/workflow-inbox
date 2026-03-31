@@ -28,6 +28,7 @@ export class GlobGlobStack extends cdk.Stack {
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '../../dist'))],
       destinationBucket: websiteBucket,
+      prune: true, // Remove old files not in the new deployment
     });
 
     // Lambda execution role with Bedrock access
