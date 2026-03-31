@@ -74,7 +74,7 @@ jobs:
       - name: Deploy with CDK
         run: |
           cd infra
-          npx cdk deploy --require-approval never --outputs-file ../cdk-outputs.json
+          npx cdk deploy GlobGlobStack --require-approval never --outputs-file ../cdk-outputs.json
 
       - name: Show deployment outputs
         run: |
